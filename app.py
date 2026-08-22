@@ -6,6 +6,7 @@ from langchain_community.vectorstores import Chroma
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+import uuid
 
 st.set_page_config(page_title="Smart Document Assistant", page_icon="🤖")
 st.title("🤖 Your Smart Document Assistant")
@@ -91,7 +92,11 @@ if st.session_state.vector_store is None:
                 text_chunks = text_splitter.split_text(extracted_text)
                 
                 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2", model_kwargs={'device': 'cpu'})
-                vector_store = Chroma.from_texts(texts=text_chunks, embedding=embeddings)
+                vector_store = Chroma.from_texts(
+                    texts=text_chunks, 
+                    embedding=embeddings,
+                    collection_name=f"pdf_rag_{uuid.uuid4().hex}"
+                )
                 
                 # Save to memory and IMMEDIATELY refresh the page to hide Step 1
                 st.session_state.vector_store = vector_store
@@ -141,7 +146,7 @@ if st.session_state.vector_store is not None:
             # Display assistant response in chat message container
             with st.chat_message("assistant"):
                 with st.spinner("Analyzing document and generating answer..."):
-                    relevant_chunks = st.session_state.vector_store.similarity_search(user_question, k=3)
+                    relevant_chunks = st.session_state.vector_store.similarity_search(user_question, k=6)
                     context = "\n\n---\n\n".join([chunk.page_content for chunk in relevant_chunks])
                     
                     llm = ChatGoogleGenerativeAI(
