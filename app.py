@@ -10,17 +10,24 @@ from langchain_core.output_parsers import StrOutputParser
 st.set_page_config(page_title="Smart Document Assistant", page_icon="🤖")
 st.title("🤖 Your Smart Document Assistant")
 
+# --- Hero Section ---
+st.markdown("""
+Welcome to your intelligent document assistant! 
+Upload any lengthy PDF, and I will read it, understand its context, and answer your questions based **strictly** on the document's content.
+""")
+st.divider()
+
 # Important engineering concept: Using Session State
 if "vector_store" not in st.session_state:
     st.session_state.vector_store = None
+if "use_sample" not in st.session_state:
+    st.session_state.use_sample = False
 
 # ==========================================
-# UI STEP 1: SIDEBAR REVAMP (BYOK & INFO)
+# UI STEP 1: SIDEBAR (API SETTINGS)
 # ==========================================
 with st.sidebar:
-    st.header("🔑 1. API Settings")
-    
-    # 1. API Key Mode Selection (Bring Your Own Key)
+    st.header("🔑 API Settings")
     api_mode = st.radio(
         "Choose API Key Mode:",
         ["🟢 Use App's Default Key (Free)", "🔑 Use My Own API Key"]
@@ -28,16 +35,13 @@ with st.sidebar:
     
     google_api_key = None
     if api_mode == "🟢 Use App's Default Key (Free)":
-        # Safely read from secrets.toml (or Streamlit Cloud Secrets)
         if "GOOGLE_API_KEY" in st.secrets:
             google_api_key = st.secrets["GOOGLE_API_KEY"]
         else:
             st.error("⚠️ Server API key not configured. Please use your own key.")
     else:
-        # Show password input only if user chooses to bring their own key
         google_api_key = st.text_input("Enter your Google API Key (Gemini):", type="password")
         
-    # Educational Tooltip for users/recruiters
     with st.expander("💡 Why use my own key?"):
         st.caption(
             "The public key provided by this site has a daily rate limit from Google. "
@@ -45,57 +49,69 @@ with st.sidebar:
             "By providing your own key, you ensure a stable, faster, and completely private connection. "
             "**(Your key is NEVER stored on our servers).**"
         )
-    
-    st.divider()
-
-    st.header("📄 2. Upload Document")
-    uploaded_file = st.file_uploader("Upload your PDF file here", type="pdf")
-    
 
 # ==========================================
-# MAIN APP FLOW (Unchanged for now)
+# UI STEP 2: DATA INGESTION (MAIN PAGE)
 # ==========================================
-if uploaded_file is not None:
-    if st.session_state.vector_store is None:
+# 1. If database is EMPTY, show the upload section (Step 1)
+if st.session_state.vector_store is None:
+    st.header("📥 Step 1: Provide a Document")
+
+    col1, col2 = st.columns([1, 1])
+
+    with col1:
+        uploaded_file = st.file_uploader("Upload your PDF file", type="pdf")
+
+    with col2:
+        st.info("💡 Don't have a PDF ready? Try this 👇")
+        if st.button("📄 Load Sample Document (Attention Is All You Need)"):
+            st.session_state.use_sample = True
+
+    # Logic to determine which file to process
+    file_to_process = None
+    if uploaded_file is not None:
+        file_to_process = uploaded_file
+        st.session_state.use_sample = False
+    elif st.session_state.use_sample:
+        file_to_process = "sample.pdf"
+
+    # Process the file if provided
+    if file_to_process is not None:
         with st.spinner("Processing and building database... (This may take a few minutes)"):
-            
-            # 1. Text Extraction
-            pdf_reader = PdfReader(uploaded_file)
-            extracted_text = ""
-            for page in pdf_reader.pages:
-                extracted_text += page.extract_text()
-            
-            # 2. Text Chunking
-            text_splitter = RecursiveCharacterTextSplitter(
-                chunk_size=1000, 
-                chunk_overlap=200 
-            )
-            text_chunks = text_splitter.split_text(extracted_text)
-            
-            # 3. Convert to vectors using a lightweight AI model (no GPU required)
-            embeddings = HuggingFaceEmbeddings(
-                model_name="all-MiniLM-L6-v2",
-                model_kwargs={'device': 'cpu'}
-            )
-            
-            # 4. Store in Chroma vector database
-            vector_store = Chroma.from_texts(
-                texts=text_chunks, 
-                embedding=embeddings
-            )
-            
-            # Save database in session state
-            st.session_state.vector_store = vector_store
-            
-        st.success("File successfully processed and stored in database! ✅")
-        
-        with st.expander("View Processing Details"):
-            st.write(f"Total pages: {len(pdf_reader.pages)}")
-            st.write(f"Your text was split into {len(text_chunks)} small chunks.")
+            try:
+                pdf_reader = PdfReader(file_to_process)
+                extracted_text = ""
+                for page in pdf_reader.pages:
+                    extracted_text += page.extract_text()
+                
+                text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+                text_chunks = text_splitter.split_text(extracted_text)
+                
+                embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2", model_kwargs={'device': 'cpu'})
+                vector_store = Chroma.from_texts(texts=text_chunks, embedding=embeddings)
+                
+                # Save to memory and IMMEDIATELY refresh the page to hide Step 1
+                st.session_state.vector_store = vector_store
+                st.rerun()
+                
+            except FileNotFoundError:
+                st.error("⚠️ Sample file not found! Please make sure 'sample.pdf' exists in the project folder.")
+                st.session_state.use_sample = False
 
-    # Q&A Section
+# 2. If database is READY, hide Step 1 and show a small Reset button
+else:
+    st.success("✅ Document processed and database is ready!")
+    if st.button("🔄 Upload a different document (Back to Step 1)"):
+        st.session_state.vector_store = None
+        st.session_state.use_sample = False
+        st.rerun() # Refresh to show Step 1 again
+
+# ==========================================
+# UI STEP 3: SMART Q&A (Only visible if Step 1 is done)
+# ==========================================
+if st.session_state.vector_store is not None:
     st.divider()
-    st.subheader("💬 3. Smart Q&A")
+    st.subheader("💬 Step 2: Smart Q&A")
     user_question = st.text_input("What is your question about this document?")
     
     if user_question:
@@ -134,8 +150,7 @@ if uploaded_file is not None:
                 with st.expander("🔍 View the source text used for this answer"):
                     st.write(context)
 
-else:
-    st.info("Please upload a PDF file from the left sidebar first.")
+
 # ==========================================
 # RENDER SIDEBAR INFO PANEL AT THE END
 # ==========================================
