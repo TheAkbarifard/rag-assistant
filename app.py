@@ -22,6 +22,9 @@ if "vector_store" not in st.session_state:
     st.session_state.vector_store = None
 if "use_sample" not in st.session_state:
     st.session_state.use_sample = False
+# NEW: Store chat history in session state
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
 # ==========================================
 # UI STEP 1: SIDEBAR (API SETTINGS)
@@ -104,57 +107,76 @@ else:
     if st.button("🔄 Upload a different document (Back to Step 1)"):
         st.session_state.vector_store = None
         st.session_state.use_sample = False
+        st.session_state.messages = [] # IMPORTANT: Clear chat history when new file is uploaded
         st.rerun() # Refresh to show Step 1 again
 
 # ==========================================
-# UI STEP 3: SMART Q&A (Only visible if Step 1 is done)
+# UI STEP 3: SMART Q&A (CHAT INTERFACE)
 # ==========================================
 if st.session_state.vector_store is not None:
     st.divider()
-    st.subheader("💬 Step 2: Smart Q&A")
-    user_question = st.text_input("What is your question about this document?")
+    st.subheader("💬 Step 2: Chat with your Document")
     
-    if user_question:
+    # 1. Display chat messages from history on app rerun
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+            # Display sources if they exist in the message history
+            if "source" in message:
+                with st.expander("🔍 View the source text used for this answer"):
+                    st.write(message["source"])
+
+    # 2. React to user input
+    if user_question := st.chat_input("What is your question about this document?"):
+        
         if not google_api_key:
             st.error("⚠️ Please enter your Google API Key in the sidebar first.")
         else:
-            with st.spinner("Analyzing document and generating answer..."):
-                relevant_chunks = st.session_state.vector_store.similarity_search(user_question, k=3)
-                context = "\n\n---\n\n".join([chunk.page_content for chunk in relevant_chunks])
-                
-                llm = ChatGoogleGenerativeAI(
-                    model="gemini-flash-latest",
-                    google_api_key=google_api_key,
-                    temperature=0.3
-                )
-                
-                prompt = ChatPromptTemplate.from_messages([
-                    ("system", """You are a smart, professional, and accurate assistant. Your task is to answer questions based ONLY on the provided context.
+            # Display user message in chat message container
+            st.chat_message("user").markdown(user_question)
+            
+            # Add user message to chat history
+            st.session_state.messages.append({"role": "user", "content": user_question})
+            
+            # Display assistant response in chat message container
+            with st.chat_message("assistant"):
+                with st.spinner("Analyzing document and generating answer..."):
+                    relevant_chunks = st.session_state.vector_store.similarity_search(user_question, k=3)
+                    context = "\n\n---\n\n".join([chunk.page_content for chunk in relevant_chunks])
                     
-                    Important Rules:
-                    1. Answer based ONLY on the text provided below.
-                    2. If the answer is not in the text, politely say "I'm sorry, but the answer to this question is not available in the document." Do NOT make up information.
-                    3. Provide a clear and complete answer.
+                    llm = ChatGoogleGenerativeAI(
+                        model="gemini-flash-latest",
+                        google_api_key=google_api_key,
+                        temperature=0.3
+                    )
                     
-                    Context extracted from document:
-                    {context}"""),
-                    ("human", "User question: {question}")
-                ])
-                
-                chain = prompt | llm | StrOutputParser()
-                response = chain.invoke({"context": context, "question": user_question})
+                    prompt_template = ChatPromptTemplate.from_messages([
+                        ("system", """You are a smart, professional, and accurate assistant. Your task is to answer questions based ONLY on the provided context.
+                        
+                        Important Rules:
+                        1. Answer based ONLY on the text provided below.
+                        2. If the answer is not in the text, politely say "I'm sorry, but the answer to this question is not available in the document." Do NOT make up information.
+                        3. Provide a clear and complete answer.
+                        
+                        Context extracted from document:
+                        {context}"""),
+                        ("human", "User question: {question}")
+                    ])
+                    
+                    chain = prompt_template | llm | StrOutputParser()
+                    response = chain.invoke({"context": context, "question": user_question})
 
-                st.success("🤖 AI Answer:")
-                st.write(response)
+                    st.markdown(response)
+                    with st.expander("🔍 View the source text used for this answer"):
+                        st.write(context)
                 
-                with st.expander("🔍 View the source text used for this answer"):
-                    st.write(context)
+            # Add assistant response and its source to chat history
+            st.session_state.messages.append({"role": "assistant", "content": response, "source": context})
 
 
 # ==========================================
 # RENDER SIDEBAR INFO PANEL AT THE END
 # ==========================================
-# (This ensures the status turns green immediately after processing)
 with st.sidebar:
     st.divider()
     st.header("ℹ️ Info Panel")
