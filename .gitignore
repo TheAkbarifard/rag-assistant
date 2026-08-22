@@ -1,4 +1,13 @@
+# Python virtual environment
 venv/
 __pycache__/
+
+# Database and Secrets
 .chroma/
+.streamlit/
+
+# Ignore all PDFs to protect user data
 *.pdf
+
+# EXCEPTION: Always track the sample document for the portfolio
+!sample.pdf
