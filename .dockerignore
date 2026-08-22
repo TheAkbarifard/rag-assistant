@@ -1,0 +1,16 @@
+# Python virtual environment
+venv/
+__pycache__/
+
+# Git directory
+.git/
+
+# Database and Secrets (CRITICAL for security)
+.chroma/
+.streamlit/
+
+# Ignore all PDFs to keep the image size small
+*.pdf
+
+# EXCEPTION: Keep the sample document
+!sample.pdf
