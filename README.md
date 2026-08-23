@@ -52,7 +52,7 @@ An enterprise-grade Retrieval-Augmented Generation (RAG) application built with 
    ```toml
    GOOGLE_API_KEY = "your_actual_api_key_here"
    ```
-   *(Note: The app will still work without this file if you choose to manually enter your key in the app's sidebar during runtime).*
+   > **🛡️ Why this approach?** Hardcoding API keys directly into the source code is a major security risk. Using Streamlit's `secrets.toml` ensures your key remains local and secure (as it is ignored by Git). Additionally, our BYOK (Bring Your Own Key) architecture allows users to input their own keys via the UI if this secret file is missing, making the application perfectly safe and flexible for public deployment.
 
 4. **Run the Streamlit app:**
    ```bash
