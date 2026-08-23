@@ -192,4 +192,4 @@ with st.sidebar:
     else:
         st.markdown("**Database:** 🔴 Empty")
     
-    st.markdown("[🔗 View Source Code on GitHub](#)")
+    st.markdown("[🔗 View Source Code on GitHub](https://github.com/TheAkbarifard/rag-assistant)")
