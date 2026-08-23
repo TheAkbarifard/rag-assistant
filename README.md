@@ -1,8 +1,20 @@
+<div align="center">
+  <img src="assets/Smart_Document_Assistant_GitHub.jpeg" alt="Smart Document Assistant Banner" width="100%">
+</div>
+
 # 🤖 Smart Document Assistant (RAG)
 
 An enterprise-grade Retrieval-Augmented Generation (RAG) application built with Streamlit, LangChain, and Google Gemini. This assistant allows users to upload lengthy PDF documents and chat with them in a highly interactive, context-aware interface.
 
-### 🌐 [Live Demo: Try the App Here!](https://akbarifard-rag.streamlit.app)
+<div align="center">
+
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Play_Now-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://akbarifard-rag.streamlit.app)
+
+*Experience the AI in action directly in your browser!*
+
+</div>
+
+---
 
 ## ✨ Key Features
 
