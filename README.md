@@ -34,18 +34,28 @@ An enterprise-grade Retrieval-Augmented Generation (RAG) application built with 
 
 ## 🚀 How to Run Locally
 
-1. Clone this repository:
+1. **Clone this repository:**
    ```bash
    git clone [https://github.com/TheAkbarifard/rag-assistant.git](https://github.com/TheAkbarifard/rag-assistant.git)
    cd rag-assistant
    ```
 
-2. Install the required dependencies:
+2. **Install the required dependencies:**
    ```bash
    pip install -r requirements.txt
    ```
 
-3. Run the Streamlit app:
+3. **Set up your API Key:**
+   To use the default key functionality locally, create a `secrets.toml` file:
+   * Create a folder named `.streamlit` in the root directory.
+   * Inside it, create a file named `secrets.toml`.
+   * Add your Google Gemini API key like this:
+     ```toml
+     GOOGLE_API_KEY = "your_actual_api_key_here"
+     ```
+   *(Note: The app will still work without this if the user manually enters their key in the sidebar during runtime).*
+
+4. **Run the Streamlit app:**
    ```bash
    streamlit run app.py
    ```
