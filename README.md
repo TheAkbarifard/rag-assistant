@@ -2,6 +2,8 @@
 
 An enterprise-grade Retrieval-Augmented Generation (RAG) application built with Streamlit, LangChain, and Google Gemini. This assistant allows users to upload lengthy PDF documents and chat with them in a highly interactive, context-aware interface.
 
+### 🌐 [Live Demo: Try the App Here!](https://akbarifard-rag.streamlit.app)
+
 ## ✨ Key Features
 
 *   **Progressive UI & Focus Mode:** Step-by-step document ingestion that hides the upload interface once the database is ready, ensuring a distraction-free chat experience.
