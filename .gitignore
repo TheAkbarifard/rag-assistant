@@ -11,3 +11,6 @@ __pycache__/
 
 # EXCEPTION: Always track the sample document for the portfolio
 !sample.pdf
+
+#Ignore Zone.Identifier files
+*:Zone.Identifier
