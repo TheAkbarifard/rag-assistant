@@ -46,14 +46,13 @@ An enterprise-grade Retrieval-Augmented Generation (RAG) application built with 
    ```
 
 3. **Set up your API Key:**
-   To use the default key functionality locally, create a `secrets.toml` file:
-   * Create a folder named `.streamlit` in the root directory.
-   * Inside it, create a file named `secrets.toml`.
-   * Add your Google Gemini API key like this:
-     ```toml
-     GOOGLE_API_KEY = "your_actual_api_key_here"
-     ```
-   *(Note: The app will still work without this if the user manually enters their key in the sidebar during runtime).*
+   To power the AI, you need a Google Gemini API key. You can easily get one for free by following the [Official Google AI Studio Guide](https://ai.google.dev/gemini-api/docs/api-key).
+   
+   Once you have your key, configure it locally by creating a `.streamlit` folder in the root directory and adding a `secrets.toml` file inside it:
+   ```toml
+   GOOGLE_API_KEY = "your_actual_api_key_here"
+   ```
+   *(Note: The app will still work without this file if you choose to manually enter your key in the app's sidebar during runtime).*
 
 4. **Run the Streamlit app:**
    ```bash
