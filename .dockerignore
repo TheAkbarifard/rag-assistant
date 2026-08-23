@@ -14,3 +14,6 @@ __pycache__/
 
 # EXCEPTION: Keep the sample document
 !sample.pdf
+
+# Ignore GitHub visual assets
+assets/
